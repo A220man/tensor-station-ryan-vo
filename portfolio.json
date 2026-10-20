@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "name": "tensor-station-ryan-vo",
+  "owner": "A220man",
+  "email": "ryandtvo@gmail.com",
+  "domain": "AI/ML developer tools",
+  "summary": "Work in progress: tensor-station-ryan-vo",
+  "workflows": [
+    "Create and execute diffusion pipelines via visual node graph",
+    "Load, cache, and hot-swap models with VRAM-aware memory management",
+    "Generate images with multiple samplers and scheduler configurations"
+  ],
+  "auth": "oidc-keycloak-saml-broker",
+  "llm_providers": [
+    "openai-compatible",
+    "anthropic",
+    "gemini",
+    "ollama"
+  ],
+  "status": "work-in-progress"
+}

@@ -1,0 +1,107 @@
+{
+  "schema_version": 1,
+  "current_feature": "project-skeleton",
+  "features": [
+    {
+      "id": "project-skeleton",
+      "title": "Project Skeleton with FastAPI Backend and React Frontend",
+      "status": "in_progress",
+      "acceptance": [
+        "FastAPI app starts and serves health endpoint",
+        "React + TypeScript + Vite frontend builds",
+        "Docker compose brings up backend, frontend, Keycloak, PostgreSQL",
+        "Backend tests pass (pytest)",
+        "Frontend typecheck and build pass",
+        "portfolio.json created with required fields"
+      ],
+      "implementation": [
+        "backend/app/main.py",
+        "backend/app/core/config.py",
+        "backend/app/api/health.py",
+        "backend/requirements.txt",
+        "backend/tests/test_health.py",
+        "frontend/package.json",
+        "frontend/tsconfig.json",
+        "frontend/vite.config.ts",
+        "frontend/src/main.tsx",
+        "frontend/src/App.tsx",
+        "frontend/src/api/client.ts",
+        "docker-compose.yaml",
+        "backend/Dockerfile",
+        "frontend/Dockerfile",
+        "portfolio.json"
+      ],
+      "tests": [
+        "backend/tests/test_health.py",
+        "frontend/src/App.test.tsx"
+      ]
+    },
+    {
+      "id": "workflow-graph-editor",
+      "title": "Node-based Workflow Graph Editor",
+      "status": "planned",
+      "acceptance": [
+        "Canvas with pan/zoom",
+        "Add/remove nodes",
+        "Connect nodes with edges",
+        "Save/load workflow JSON",
+        "Execute workflow via backend API"
+      ],
+      "implementation": [],
+      "tests": []
+    },
+    {
+      "id": "model-management",
+      "title": "Model Loading and Caching",
+      "status": "planned",
+      "acceptance": [
+        "Load diffusion models from disk",
+        "Cache models in VRAM/RAM",
+        "Hot-swap models without reload",
+        "Memory pressure handling"
+      ],
+      "implementation": [],
+      "tests": []
+    },
+    {
+      "id": "inference-engine",
+      "title": "Fast Local Inference Engine",
+      "status": "planned",
+      "acceptance": [
+        "Run diffusion sampling",
+        "Support multiple schedulers",
+        "Progress callbacks",
+        "Cancel/queue management"
+      ],
+      "implementation": [],
+      "tests": []
+    },
+    {
+      "id": "auth-oidc",
+      "title": "OIDC Authentication with Keycloak",
+      "status": "planned",
+      "acceptance": [
+        "Login/logout flow",
+        "Role-based access (viewer/operator/admin)",
+        "Protected API endpoints",
+        "Session management"
+      ],
+      "implementation": [],
+      "tests": []
+    },
+    {
+      "id": "llm-adapters",
+      "title": "LLM Provider Adapters",
+      "status": "planned",
+      "acceptance": [
+        "OpenAI-compatible adapter",
+        "Anthropic adapter",
+        "Gemini adapter",
+        "Ollama adapter",
+        "Configurable via env vars"
+      ],
+      "implementation": [],
+      "tests": []
+    }
+  ]
+}
