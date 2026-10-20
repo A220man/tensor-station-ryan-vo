@@ -1,0 +1,103 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: tensor-station-postgres
+    environment:
+      POSTGRES_DB: tensor_station
+      POSTGRES_USER: tensor_station
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "127.0.0.1:5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tensor_station -d tensor_station"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.0
+    container_name: tensor-station-keycloak
+    command: start-dev
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-changeme}
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres:5432/tensor_station
+      KC_DB_USERNAME: tensor_station
+      KC_DB_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
+      KC_HOSTNAME: localhost
+      KC_HOSTNAME_PORT: 8080
+      KC_HOSTNAME_STRICT: "false"
+      KC_HTTP_ENABLED: "true"
+    ports:
+      - "127.0.0.1:8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/health/ready || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: tensor-station-backend
+    environment:
+      DATABASE_URL: postgresql+asyncpg://tensor_station:${POSTGRES_PASSWORD:-changeme}@postgres:5432/tensor_station
+      SECRET_KEY: ${SECRET_KEY:-changeme}
+      OIDC_ENABLED: "true"
+      OIDC_ISSUER_URL: http://keycloak:8080/realms/tensor-station
+      OIDC_CLIENT_ID: tensor-station-backend
+      OIDC_CLIENT_SECRET: ${OIDC_CLIENT_SECRET:-changeme}
+      OIDC_REDIRECT_URI: http://localhost:3000/callback
+      LLM_API_KEY: ${LLM_API_KEY:-}
+      LLM_PROVIDER: ${LLM_PROVIDER:-openai-compatible}
+      LLM_MODEL: ${LLM_MODEL:-gpt-4o-mini}
+      LLM_BASE_URL: ${LLM_BASE_URL:-}
+      DEFAULT_DEVICE: cuda
+      MAX_VRAM_USAGE_GB: "12.0"
+    ports:
+      - "127.0.0.1:8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
+    volumes:
+      - ./backend/app:/app/app:ro
+      - model_cache:/app/models
+    healthcheck:
+      test: ["CMD", "python", "-c", "import httpx; httpx.get('http://localhost:8000/api/v1/health', timeout=5)"]
+      interval: 30s
+      timeout: 5s
+      start_period: 10s
+      retries: 3
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: tensor-station-frontend
+    environment:
+      VITE_API_BASE: /api/v1
+    ports:
+      - "127.0.0.1:3000:3000"
+    depends_on:
+      - backend
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3000"]
+      interval: 30s
+      timeout: 5s
+      start_period: 10s
+      retries: 3
+
+volumes:
+  postgres_data:
+  model_cache:
