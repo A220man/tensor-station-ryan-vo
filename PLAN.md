@@ -10,7 +10,7 @@ project-skeleton
 
 ### project-skeleton — Project Skeleton with FastAPI Backend and React Frontend
 
-Status: in_progress
+Status: done
 
 Acceptance:
 - FastAPI app starts and serves health endpoint

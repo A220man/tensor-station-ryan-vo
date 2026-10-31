@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, status, BackgroundTasks
 from pydantic import BaseModel, Field
 from typing import Optional, List, Dict, Any
-from datetime import datetime
+from datetime import datetime, UTC
 import uuid
 import asyncio
 
@@ -47,7 +47,7 @@ _executions: Dict[str, Dict] = {}
 @router.post("/inference", response_model=InferenceResponse, status_code=status.HTTP_202_ACCEPTED)
 async def queue_inference(request: InferenceRequest, background_tasks: BackgroundTasks):
     execution_id = str(uuid.uuid4())
-    now = datetime.utcnow()
+    now = datetime.now(UTC)
 
     _executions[execution_id] = {
         "execution_id": execution_id,
@@ -88,7 +88,7 @@ async def run_inference(execution_id: str):
         return
 
     exec_data["status"] = "running"
-    exec_data["started_at"] = datetime.utcnow()
+    exec_data["started_at"] = datetime.now(UTC)
 
     # Simulate inference steps
     for step in range(exec_data["total_steps"]):
@@ -97,7 +97,7 @@ async def run_inference(execution_id: str):
         exec_data["progress"] = (step + 1) / exec_data["total_steps"]
 
     exec_data["status"] = "completed"
-    exec_data["completed_at"] = datetime.utcnow()
+    exec_data["completed_at"] = datetime.now(UTC)
     exec_data["result_urls"] = [f"/outputs/{execution_id}_0.png"]
 
 

@@ -1,9 +1,21 @@
 # Changelog
 
-## 1.1.0 — work-in-progress checkpoint
+## 1.2.0 — work-in-progress checkpoint
 
 Partial code published for continued development. Known issues: STATUS.md.
 
+## 1.1.0 — work-in-progress checkpoint
+
+### Fixed
+- datetime.utcnow() deprecation warnings replaced with timezone-aware datetime.now(UTC) across all API modules
+- Pydantic class-based Config migrated to ConfigDict in WorkflowResponse, ModelInfo, ModelLoadRequest, ModelLoadResponse
+- Pydantic protected_namespaces warnings resolved for model_id fields
+
+### Verified
+- All backend tests pass (14/14)
+- All frontend tests pass (3/3)
+- Frontend TypeScript compilation and Vite build successful
+- FastAPI app starts and serves health endpoint
 ## 1.0.0 — work-in-progress checkpoint
 
 Partial code published for continued development. Known issues: STATUS.md.
