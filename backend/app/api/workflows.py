@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, status
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from typing import Optional, List, Dict, Any
-from datetime import datetime
+from datetime import datetime, UTC
 import uuid
 
 router = APIRouter(tags=["workflows"])
@@ -45,8 +45,7 @@ class WorkflowResponse(BaseModel):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # In-memory storage (replace with DB in next phase)
@@ -56,7 +55,7 @@ _workflows: Dict[str, Dict] = {}
 @router.post("/workflows", response_model=WorkflowResponse, status_code=status.HTTP_201_CREATED)
 async def create_workflow(workflow: WorkflowCreate):
     workflow_id = str(uuid.uuid4())
-    now = datetime.utcnow()
+    now = datetime.now(UTC)
     data = workflow.model_dump()
     data.update({"id": workflow_id, "created_at": now, "updated_at": now})
     _workflows[workflow_id] = data
@@ -82,7 +81,7 @@ async def update_workflow(workflow_id: str, workflow: WorkflowUpdate):
         raise HTTPException(status_code=404, detail="Workflow not found")
     data = _workflows[workflow_id]
     update_data = workflow.model_dump(exclude_unset=True)
-    update_data["updated_at"] = datetime.utcnow()
+    update_data["updated_at"] = datetime.now(UTC)
     data.update(update_data)
     return WorkflowResponse(**data)
 

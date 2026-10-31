@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, status
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from typing import Optional, List, Dict, Any
-from datetime import datetime
+from datetime import datetime, UTC
 import uuid
 
 router = APIRouter(tags=["models"])
@@ -18,8 +18,7 @@ class ModelInfo(BaseModel):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ModelCreate(BaseModel):
@@ -36,6 +35,8 @@ class ModelLoadRequest(BaseModel):
     device: str = "cuda"
     dtype: str = "float16"
 
+    model_config = {"protected_namespaces": ()}
+
 
 class ModelLoadResponse(BaseModel):
     model_id: str
@@ -43,6 +44,8 @@ class ModelLoadResponse(BaseModel):
     device: str
     vram_used_mb: float
     load_time_ms: float
+
+    model_config = {"protected_namespaces": ()}
 
 
 # In-memory storage
@@ -53,7 +56,7 @@ _loaded_models: Dict[str, Dict] = {}
 @router.post("/models", response_model=ModelInfo, status_code=status.HTTP_201_CREATED)
 async def register_model(model: ModelCreate):
     model_id = str(uuid.uuid4())
-    now = datetime.utcnow()
+    now = datetime.now(UTC)
     data = model.model_dump()
     data.update({"id": model_id, "created_at": now, "updated_at": now})
     _models[model_id] = data
@@ -90,7 +93,7 @@ async def load_model(request: ModelLoadRequest):
     _loaded_models[request.model_id] = {
         "device": request.device,
         "dtype": request.dtype,
-        "loaded_at": datetime.utcnow(),
+        "loaded_at": datetime.now(UTC),
     }
 
     return ModelLoadResponse(

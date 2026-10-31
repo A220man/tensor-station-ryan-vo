@@ -5,7 +5,7 @@
     {
       "id": "project-skeleton",
       "title": "Project Skeleton with FastAPI Backend and React Frontend",
-      "status": "in_progress",
+      "status": "done",
       "acceptance": [
         "FastAPI app starts and serves health endpoint",
         "React + TypeScript + Vite frontend builds",
