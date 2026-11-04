@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "current_feature": "project-skeleton",
+  "current_feature": "inference-validation",
   "features": [
     {
       "id": "project-skeleton",
@@ -34,6 +34,26 @@
       "tests": [
         "backend/tests/test_health.py",
         "frontend/src/App.test.tsx"
+      ]
+    },
+    {
+      "id": "inference-validation",
+      "title": "Inference Request Validation and Progress Tracking",
+      "status": "done",
+      "acceptance": [
+        "Inference requests accept optional model_id field",
+        "Model validation against registered models returns 404 for invalid IDs",
+        "Inference simulation tracks progress (0.0 to 1.0) with current_step/total_steps",
+        "Batch size support generates multiple result URLs",
+        "Error handling with failed status and error messages",
+        "Cancel endpoint for queued/running executions"
+      ],
+      "implementation": [
+        "backend/app/api/inference.py",
+        "backend/tests/test_inference.py"
+      ],
+      "tests": [
+        "backend/tests/test_inference.py"
       ]
     },
     {
