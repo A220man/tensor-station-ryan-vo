@@ -16,9 +16,21 @@ async def test_queue_inference(client):
     wf_resp = await client.post("/api/v1/workflows", json=wf_payload)
     wf_id = wf_resp.json()["id"]
 
+    # Create a model
+    model_payload = {
+        "name": "Test Model",
+        "type": "checkpoint",
+        "path": "/models/test.safetensors",
+        "size_bytes": 1000000000,
+        "format": "safetensors"
+    }
+    model_resp = await client.post("/api/v1/models", json=model_payload)
+    model_id = model_resp.json()["id"]
+
     # Queue inference
     payload = {
         "workflow_id": wf_id,
+        "model_id": model_id,
         "prompt": "a beautiful landscape",
         "width": 512,
         "height": 512,
@@ -36,13 +48,74 @@ async def test_queue_inference(client):
 
 
 @pytest.mark.asyncio
+async def test_queue_inference_without_model(client):
+    # First create a workflow
+    wf_payload = {"name": "Inference WF No Model", "nodes": [], "edges": []}
+    wf_resp = await client.post("/api/v1/workflows", json=wf_payload)
+    wf_id = wf_resp.json()["id"]
+
+    # Queue inference without model_id (should work, model_id is optional)
+    payload = {
+        "workflow_id": wf_id,
+        "prompt": "a beautiful landscape",
+        "width": 512,
+        "height": 512,
+        "steps": 10,
+        "cfg_scale": 7.0,
+        "sampler": "euler",
+        "scheduler": "normal"
+    }
+    response = await client.post("/api/v1/inference", json=payload)
+    assert response.status_code == 202
+    data = response.json()
+    assert data["status"] == "queued"
+    assert "execution_id" in data
+
+
+@pytest.mark.asyncio
+async def test_queue_inference_invalid_model(client):
+    # First create a workflow
+    wf_payload = {"name": "Inference WF Invalid Model", "nodes": [], "edges": []}
+    wf_resp = await client.post("/api/v1/workflows", json=wf_payload)
+    wf_id = wf_resp.json()["id"]
+
+    # Queue inference with invalid model_id (should fail)
+    payload = {
+        "workflow_id": wf_id,
+        "model_id": "invalid-model-id",
+        "prompt": "a beautiful landscape",
+        "width": 512,
+        "height": 512,
+        "steps": 10,
+        "cfg_scale": 7.0,
+        "sampler": "euler",
+        "scheduler": "normal"
+    }
+    response = await client.post("/api/v1/inference", json=payload)
+    assert response.status_code == 404
+    data = response.json()
+    assert "not found" in data["detail"].lower()
+
+
+@pytest.mark.asyncio
 async def test_get_execution_status(client):
-    # Create workflow and queue inference
+    # Create workflow and model
     wf_payload = {"name": "Status WF", "nodes": [], "edges": []}
     wf_resp = await client.post("/api/v1/workflows", json=wf_payload)
     wf_id = wf_resp.json()["id"]
 
-    inf_payload = {"workflow_id": wf_id, "prompt": "test", "steps": 5}
+    model_payload = {
+        "name": "Status Model",
+        "type": "checkpoint",
+        "path": "/models/status.safetensors",
+        "size_bytes": 1000000000,
+        "format": "safetensors"
+    }
+    model_resp = await client.post("/api/v1/models", json=model_payload)
+    model_id = model_resp.json()["id"]
+
+    # Queue inference
+    inf_payload = {"workflow_id": wf_id, "model_id": model_id, "prompt": "test", "steps": 5}
     inf_resp = await client.post("/api/v1/inference", json=inf_payload)
     exec_id = inf_resp.json()["execution_id"]
 
@@ -68,7 +141,17 @@ async def test_cancel_inference(client):
     wf_resp = await client.post("/api/v1/workflows", json=wf_payload)
     wf_id = wf_resp.json()["id"]
 
-    inf_payload = {"workflow_id": wf_id, "prompt": "cancel test", "steps": 20}
+    model_payload = {
+        "name": "Cancel Model",
+        "type": "checkpoint",
+        "path": "/models/cancel.safetensors",
+        "size_bytes": 1000000000,
+        "format": "safetensors"
+    }
+    model_resp = await client.post("/api/v1/models", json=model_payload)
+    model_id = model_resp.json()["id"]
+
+    inf_payload = {"workflow_id": wf_id, "model_id": model_id, "prompt": "cancel test", "steps": 20}
     inf_resp = await client.post("/api/v1/inference", json=inf_payload)
     exec_id = inf_resp.json()["execution_id"]
 
