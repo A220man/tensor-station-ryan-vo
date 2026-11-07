@@ -8,6 +8,9 @@ import random
 
 router = APIRouter(tags=["inference"])
 
+# Import workflow registry - done here to avoid circular imports
+from app.api.workflows import _workflows as _workflow_registry
+
 class InferenceRequest(BaseModel):
     workflow_id: str
     model_id: Optional[str] = None
@@ -58,8 +61,29 @@ async def validate_model(request: Request) -> Optional[str]:
         )
     return model_id
 
+async def validate_workflow(request: Request) -> str:
+    """Validate that the workflow exists in the registry."""
+    body = await request.json()
+    workflow_id = body.get("workflow_id")
+    if workflow_id is None:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="workflow_id is required"
+        )
+    if workflow_id not in _workflow_registry:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Workflow {workflow_id} not found"
+        )
+    return workflow_id
+
 @router.post("/inference", response_model=InferenceResponse, status_code=status.HTTP_202_ACCEPTED)
-async def queue_inference(request: InferenceRequest, background_tasks: BackgroundTasks, validated_model_id: Optional[str] = Depends(validate_model)):
+async def queue_inference(
+    request: InferenceRequest, 
+    background_tasks: BackgroundTasks, 
+    validated_model_id: Optional[str] = Depends(validate_model),
+    validated_workflow_id: str = Depends(validate_workflow)
+):
     execution_id = str(uuid.uuid4())
     now = datetime.now(UTC)
     _executions[execution_id] = {

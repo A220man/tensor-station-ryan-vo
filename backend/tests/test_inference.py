@@ -159,3 +159,64 @@ async def test_cancel_inference(client):
     assert response.status_code == 200
     data = response.json()
     assert data["status"] == "cancelled"
+
+
+@pytest.mark.asyncio
+async def test_queue_inference_invalid_workflow(client):
+    # Create a model (but no workflow)
+    model_payload = {
+        "name": "Invalid WF Model",
+        "type": "checkpoint",
+        "path": "/models/invalid_wf.safetensors",
+        "size_bytes": 1000000000,
+        "format": "safetensors"
+    }
+    model_resp = await client.post("/api/v1/models", json=model_payload)
+    model_id = model_resp.json()["id"]
+
+    # Queue inference with invalid workflow_id (should fail)
+    payload = {
+        "workflow_id": "invalid-workflow-id",
+        "model_id": model_id,
+        "prompt": "a beautiful landscape",
+        "width": 512,
+        "height": 512,
+        "steps": 10,
+        "cfg_scale": 7.0,
+        "sampler": "euler",
+        "scheduler": "normal"
+    }
+    response = await client.post("/api/v1/inference", json=payload)
+    assert response.status_code == 404
+    data = response.json()
+    assert "not found" in data["detail"].lower()
+
+
+@pytest.mark.asyncio
+async def test_queue_inference_missing_workflow_id(client):
+    # Create a model
+    model_payload = {
+        "name": "Missing WF Model",
+        "type": "checkpoint",
+        "path": "/models/missing_wf.safetensors",
+        "size_bytes": 1000000000,
+        "format": "safetensors"
+    }
+    model_resp = await client.post("/api/v1/models", json=model_payload)
+    model_id = model_resp.json()["id"]
+
+    # Queue inference without workflow_id (should fail with 422)
+    payload = {
+        "model_id": model_id,
+        "prompt": "a beautiful landscape",
+        "width": 512,
+        "height": 512,
+        "steps": 10,
+        "cfg_scale": 7.0,
+        "sampler": "euler",
+        "scheduler": "normal"
+    }
+    response = await client.post("/api/v1/inference", json=payload)
+    assert response.status_code == 422
+    data = response.json()
+    assert "required" in data["detail"].lower() or "workflow_id" in str(data["detail"]).lower()
