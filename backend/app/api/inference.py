@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, status, BackgroundTasks, Depends, Request
+from fastapi import APIRouter, HTTPException, status, BackgroundTasks, Depends
 from pydantic import BaseModel, Field, ConfigDict
 from typing import Optional, List, Dict, Any
 from datetime import datetime, UTC
@@ -45,11 +45,9 @@ class ExecutionStatus(BaseModel):
 
 _executions: Dict[str, Dict] = {}
 
-async def validate_model(request: Request) -> Optional[str]:
+async def validate_model(request: InferenceRequest) -> Optional[str]:
     """Validate that the model exists in the registry."""
-    # Extract model_id from request body
-    body = await request.json()
-    model_id = body.get("model_id")
+    model_id = request.model_id
     if model_id is None:
         return None
     # Import here to avoid circular imports
@@ -61,15 +59,9 @@ async def validate_model(request: Request) -> Optional[str]:
         )
     return model_id
 
-async def validate_workflow(request: Request) -> str:
+async def validate_workflow(request: InferenceRequest) -> str:
     """Validate that the workflow exists in the registry."""
-    body = await request.json()
-    workflow_id = body.get("workflow_id")
-    if workflow_id is None:
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail="workflow_id is required"
-        )
+    workflow_id = request.workflow_id
     if workflow_id not in _workflow_registry:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -87,7 +79,7 @@ async def queue_inference(
     execution_id = str(uuid.uuid4())
     now = datetime.now(UTC)
     _executions[execution_id] = {
-        "execution_id": execution_id, "workflow_id": request.workflow_id, "model_id": request.model_id,
+        "execution_id": execution_id, "workflow_id": validated_workflow_id, "model_id": validated_model_id,
         "prompt": request.prompt, "negative_prompt": request.negative_prompt, "width": request.width,
         "height": request.height, "steps": request.steps, "cfg_scale": request.cfg_scale,
         "sampler": request.sampler, "scheduler": request.scheduler, "seed": request.seed,
