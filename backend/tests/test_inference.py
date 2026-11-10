@@ -219,4 +219,7 @@ async def test_queue_inference_missing_workflow_id(client):
     response = await client.post("/api/v1/inference", json=payload)
     assert response.status_code == 422
     data = response.json()
-    assert "required" in data["detail"].lower() or "workflow_id" in str(data["detail"]).lower()
+    detail = data["detail"]
+    if isinstance(detail, list):
+        detail = " ".join(str(e.get("msg", "")) for e in detail)
+    assert "required" in detail.lower() or "workflow_id" in detail.lower()
