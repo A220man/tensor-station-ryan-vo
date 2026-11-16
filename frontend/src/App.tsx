@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { Node, Edge, addEdge, Connection, ReactFlow, Background, Controls, MiniMap, useNodesState, useEdgesState, MarkerType } from 'reactflow'
 import 'reactflow/dist/style.css'
 import './App.css'
@@ -23,7 +23,7 @@ const initialEdges: Edge[] = [
 ]
 
 export default function App() {
-  const [nodes, , onNodesChange] = useNodesState(initialNodes)
+  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes)
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges)
   const [selectedNode, setSelectedNode] = useState<Node | null>(null)
 
@@ -33,6 +33,27 @@ export default function App() {
     setSelectedNode(node)
   }, [])
 
+  const saveWorkflow = useCallback(() => {
+    const workflow = {
+      name: 'My Workflow',
+      nodes,
+      edges,
+      timestamp: Date.now(),
+    }
+    localStorage.setItem('tensor-station-workflow', JSON.stringify(workflow))
+  }, [nodes, edges])
+
+  const loadWorkflow = useCallback(() => {
+    const saved = localStorage.getItem('tensor-station-workflow')
+    if (saved) {
+      const workflow = JSON.parse(saved)
+      setNodes(workflow.nodes)
+      setEdges(workflow.edges)
+    } else {
+      alert('No saved workflow found')
+    }
+  }, [setNodes, setEdges])
+
   return (
     <div className="app">
       <header className="header">
@@ -41,11 +62,18 @@ export default function App() {
           <button className="btn btn-primary" onClick={() => alert('Execute workflow (backend integration pending)')}>
             Execute
           </button>
-          <button className="btn btn-secondary" onClick={() => alert('Save workflow (backend integration pending)')}>
+          <button className="btn btn-secondary" onClick={saveWorkflow}>
             Save
           </button>
-          <button className="btn btn-secondary" onClick={() => alert('Load workflow (backend integration pending)')}>
+          <button className="btn btn-secondary" onClick={loadWorkflow}>
             Load
+          </button>
+          <button className="btn btn-secondary" onClick={() => {
+            setNodes(initialNodes)
+            setEdges(initialEdges)
+            setSelectedNode(null)
+          }}>
+            Reset
           </button>
         </div>
       </header>
@@ -97,6 +125,15 @@ export default function App() {
             <p>ID: {selectedNode.id}</p>
             <p>Type: {selectedNode.type || 'default'}</p>
             <pre>{JSON.stringify(selectedNode.data, null, 2)}</pre>
+            <button
+              className="btn btn-primary"
+              onClick={() => {
+                setNodes((nds) => nds.filter((n) => n.id !== selectedNode.id))
+                setSelectedNode(null)
+              }}
+            >
+              Remove Node
+            </button>
           </aside>
         )}
       </div>
