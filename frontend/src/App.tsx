@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect } from 'react'
+import { workflowApi } from '../api/client'
 import { Node, Edge, addEdge, Connection, ReactFlow, Background, Controls, MiniMap, useNodesState, useEdgesState, MarkerType } from 'reactflow'
 import 'reactflow/dist/style.css'
 import './App.css'
@@ -33,17 +34,38 @@ export default function App() {
     setSelectedNode(node)
   }, [])
 
-  const saveWorkflow = useCallback(() => {
+    const saveWorkflow = useCallback(async () => {
     const workflow = {
       name: 'My Workflow',
       nodes,
       edges,
       timestamp: Date.now(),
     }
+    // Save to localStorage for instant availability
     localStorage.setItem('tensor-station-workflow', JSON.stringify(workflow))
+    // Also persist to backend
+    try {
+      await workflowApi.create(workflow)
+    } catch (error) {
+      console.error('Failed to save workflow to backend:', error)
+    }
   }, [nodes, edges])
 
-  const loadWorkflow = useCallback(() => {
+    const loadWorkflow = useCallback(async () => {
+    // Try backend first
+    try {
+      const workflows = await workflowApi.list({ limit: 1 })
+      if (workflows && workflows.length > 0) {
+        const workflow = workflows[0]
+        setNodes(workflow.nodes)
+        setEdges(workflow.edges)
+        localStorage.setItem('tensor-station-workflow', JSON.stringify(workflow))
+        return
+      }
+    } catch (error) {
+      console.error('Failed to fetch workflow from backend:', error)
+    }
+    // Fall back to localStorage
     const saved = localStorage.getItem('tensor-station-workflow')
     if (saved) {
       const workflow = JSON.parse(saved)
