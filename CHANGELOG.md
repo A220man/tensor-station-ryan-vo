@@ -1,6 +1,20 @@
 # Changelog
 
-## 1.6.0 — work-in-progress checkpoint
+## 1.7.0 — work-in-progress checkpoint
+
+Partial code published for continued development. Known issues: STATUS.md.
+
+## 1.6.1 — workflow-graph-editor API integration
+
+### Added
+- Frontend workflow-graph-editor save/load now persists to backend API
+  - Save: POST /api/v1/workflows with workflow data, localStorage fallback
+  - Load: GET /api/v1/workflows with localStorage fallback for instant availability
+- Frontend App.tsx updated with async workflow save/load using workflowApi client
+
+### Changed
+- PLAN.md: workflow-graph-editor status updated to in_progress
+- STATUS.md: checkpoint version bumped to 1.6.1, outstanding findings updated
 
 Partial code published for continued development. Known issues: STATUS.md.
 
