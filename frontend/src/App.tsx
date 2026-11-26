@@ -3,6 +3,7 @@ import { workflowApi } from '../api/client'
 import { Node, Edge, addEdge, Connection, ReactFlow, Background, Controls, MiniMap, useNodesState, useEdgesState, MarkerType } from 'reactflow'
 import 'reactflow/dist/style.css'
 import './App.css'
+import { clampViewport, MIN_ZOOM, MAX_ZOOM, Viewport } from './canvas/viewport'
 
 const initialNodes: Node[] = [
   { id: '1', type: 'input', position: { x: 250, y: 50 }, data: { label: 'Checkpoint Loader' } },
@@ -32,6 +33,16 @@ export default function App() {
 
   const onNodeClick = useCallback((_evt: unknown, node: Node) => {
     setSelectedNode(node)
+  }, [])
+
+  const onMove = useCallback((_evt: unknown, viewport: Viewport) => {
+    // Clamp pan/zoom to keep the canvas within usable bounds.
+    const clamped = clampViewport(viewport, { width: 4000, height: 3000 })
+    if (clamped.zoom !== viewport.zoom || clamped.x !== viewport.x || clamped.y !== viewport.y) {
+      // ReactFlow applies the returned viewport; returning undefined keeps its own state.
+      return clamped
+    }
+    return undefined
   }, [])
 
     const saveWorkflow = useCallback(async () => {
@@ -134,6 +145,9 @@ export default function App() {
             onEdgesChange={onEdgesChange}
             onConnect={onConnect}
             onNodeClick={onNodeClick}
+            onMove={onMove}
+            minZoom={MIN_ZOOM}
+            maxZoom={MAX_ZOOM}
             fitView
           >
             <Background />
